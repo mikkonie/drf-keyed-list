@@ -10,6 +10,7 @@ class KeyedListSerializer(ListSerializer):
         'not_a_dict': _('Expected a dict of items but got type "{input_type}".'),
         'empty': _('This dict may not be empty.')
     }
+    _duplicate_key = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -17,6 +18,7 @@ class KeyedListSerializer(ListSerializer):
         assert hasattr(meta, 'keyed_list_serializer_field'), \
             "Must provide a field name at keyed_list_serializer_field when using KeyedListSerializer"
         self._keyed_field = meta.keyed_list_serializer_field
+        self._duplicate_key = meta.duplicate_list_key
 
     def to_internal_value(self, data):
         if not isinstance(data, dict):
@@ -39,5 +41,6 @@ class KeyedListSerializer(ListSerializer):
 
     def to_representation(self, data):
         response = super().to_representation(data)
+        if self._duplicate_key:
+            return {v[self._keyed_field]: v for v in response}
         return {v.pop(self._keyed_field): v for v in response}
-
